@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_current_user
 from app.database import get_db
-from app.schemas.auth import SignUpRequest, LoginRequest, TokenResponse
+from app.schemas.auth import SignUpRequest, LoginRequest, ChangePasswordRequest, TokenResponse
 from app.models.users import User
 from app.utils.auth import create_access_token
 from app.utils.security import hash_password, verify_password
@@ -48,3 +48,42 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
     token = create_access_token(data={"user_id": user.id})
 
     return TokenResponse(access_token=token, token_type="bearer")
+
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+def logout(
+    _: User = Depends(get_current_user),
+) -> Response:
+    """
+    Stateless logout endpoint.
+    It only validates the current token; the client must delete the token
+    from storage (e.g. localStorage / cookies) to complete logout.
+    """
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post("/change-password", status_code=status.HTTP_204_NO_CONTENT)
+def change_password(
+    payload: ChangePasswordRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> Response:
+    """
+    Change the authenticated user's password.
+    Requires the correct old password and a new password.
+    """
+    if not verify_password(payload.old_password, current_user.password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Old password is incorrect",
+        )
+
+    current_user.password = hash_password(payload.new_password)
+    db.add(current_user)
+    db.commit()
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+@router.get("/me", response_model=str)
+def get_current_user_info():
+    return "Hello, World!"

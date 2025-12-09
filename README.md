@@ -223,6 +223,35 @@ Soft delete current user's profile.
 - **SQL Injection Prevention**: SQLAlchemy ORM prevents SQL injection attacks
 - **CORS**: Configured to allow cross-origin requests from frontend
 
+## Logging
+
+The application implements comprehensive logging:
+
+- **Console Logs**: Real-time logs visible in terminal
+- **File Logs**: Stored in `logs/` directory
+  - `app_YYYYMMDD.log` - All logs (DEBUG, INFO, WARNING, ERROR)
+  - `error_YYYYMMDD.log` - Error logs only
+- **Log Rotation**: New log files created daily
+
+### View Logs
+```bash
+# View today's logs
+cat logs/app_$(date +%Y%m%d).log
+
+# View errors only
+cat logs/error_$(date +%Y%m%d).log
+
+# Real-time log monitoring
+tail -f logs/app_$(date +%Y%m%d).log
+```
+
+### Log Levels
+
+- **DEBUG**: Detailed diagnostic information
+- **INFO**: General informational messages
+- **WARNING**: Warning messages
+- **ERROR**: Error messages and stack traces
+
 ## Database Schema
 
 ### Users Table
